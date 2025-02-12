@@ -1,0 +1,107 @@
+import RPi.GPIO as GPIO
+from time import sleep, time
+
+# Pines del Motor izquierdo visto desde primera persona
+motor_A_pin1 = 27
+motor_A_pin2 = 18
+motor_A_ctrl = 17
+encoder_A = 22  # Primer canal del encoder
+encoder_B = 23  # Segundo canal del encoder
+pwm_A = 0
+encoder_count = 0
+
+def encoder_callback(channel):
+    global encoder_count
+    state_A = GPIO.input(encoder_A)
+    state_B = GPIO.input(encoder_B)
+    print(f"Encoder A: {state_A}, Encoder B: {state_B}")  # Depuración
+    if state_A == state_B:
+        encoder_count += 1  # Sentido horario
+    else:
+        encoder_count -= 1  # Sentido antihorario
+
+def setup():  # Definicion de estados
+    global pwm_A
+    GPIO.cleanup()  # Asegura que no haya configuraciones previas
+    GPIO.setwarnings(False)
+    GPIO.setmode(GPIO.BCM)  # Usa los pines de GPIO
+    
+    # Definicion para motor izquierdo
+    GPIO.setup(motor_A_pin1, GPIO.OUT)
+    GPIO.setup(motor_A_pin2, GPIO.OUT)
+    GPIO.setup(motor_A_ctrl, GPIO.OUT)
+    GPIO.setup(encoder_A, GPIO.IN)
+    GPIO.setup(encoder_B, GPIO.IN)
+    
+    # Verifica el estado inicial de los encoders
+    print(f"Estado inicial encoder_A: {GPIO.input(encoder_A)}")
+    print(f"Estado inicial encoder_B: {GPIO.input(encoder_B)}")
+    
+    # Verifica el modo de los pines
+    print(f"Modo encoder_A: {GPIO.gpio_function(encoder_A)}")  # Debe ser GPIO.IN
+    print(f"Modo encoder_B: {GPIO.gpio_function(encoder_B)}{GPIO.IN}")  # Debe ser GPIO.IN
+    
+    try:
+        # Agregar debouncing con bouncetime=10 ms
+        GPIO.add_event_detect(encoder_A, GPIO.RISING, callback=encoder_callback, bouncetime=10)
+    except RuntimeError as e:
+        print(f"Error al agregar event detect: {e}")
+    
+    try:
+        pwm_A = GPIO.PWM(motor_A_ctrl, 1000)
+    except Exception as e:
+        print(f"Error al configurar PWM: {e}")
+
+def motor_izquierdo(encendido, velocidad):
+    if encendido == 0:
+        GPIO.output(motor_A_pin1, GPIO.LOW)
+        GPIO.output(motor_A_pin2, GPIO.LOW)
+        pwm_A.stop()
+    else:
+        GPIO.output(motor_A_pin1, GPIO.HIGH)
+        GPIO.output(motor_A_pin2, GPIO.LOW)
+        pwm_A.start(0)
+        pwm_A.ChangeDutyCycle(velocidad)
+
+def stop():
+    GPIO.output(motor_A_pin1, GPIO.LOW)
+    GPIO.output(motor_A_pin2, GPIO.LOW)
+
+def destroy():
+    stop()
+    GPIO.cleanup()
+    print("Saliendo")
+
+def void_loop():
+    global encoder_count
+    encoder_count = 0
+    motor_izquierdo(1, 40)
+    start_time = time()
+    sleep(5)
+    elapsed_time = time() - start_time
+    print(f"Encoder counts: {encoder_count}, Time: {elapsed_time:.2f} s")
+    motor_izquierdo(0, 100)
+    sleep(2)
+    encoder_count = 0
+    motor_izquierdo(1, 80)
+    start_time = time()
+    sleep(5)
+    elapsed_time = time() - start_time
+    print(f"Encoder counts: {encoder_count}, Time: {elapsed_time:.2f} s")
+    stop()
+    sleep(2)
+
+if _name_ == '_main_':
+    try:
+        # --configuracion--
+        setup()
+        # -----------------
+        while True:  # ciclo principal
+            try:
+                void_loop()
+            except Exception as e:
+                print(f"Error en el bucle principal: {e}")
+                destroy()
+                break  # Salir del bucle en caso de error
+    except KeyboardInterrupt:
+        destroy()

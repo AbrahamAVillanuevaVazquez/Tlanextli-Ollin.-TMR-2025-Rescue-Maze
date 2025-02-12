@@ -1,0 +1,66 @@
+from gpiozero import DigitalInputDevice
+from time import sleep, time
+
+# Pines del encoder
+encoder_A = 22  # Primer canal del encoder (CLK)
+encoder_B = 23  # Segundo canal del encoder (DT)
+
+# Variable global para contar los pulsos del encoder
+encoder_count = 0
+
+# Variables para manejar el estado anterior
+last_state_A = None
+last_state_B = None
+
+# Función de callback para el encoder
+def encoder_callback():
+    global encoder_count, last_state_A, last_state_B
+
+    # Leer el estado actual de los pines
+    state_A = encoder_A_pin.value
+    state_B = encoder_B_pin.value
+
+    # Solo procesar si el estado de A ha cambiado
+    if state_A != last_state_A:
+        # Determinar la dirección basada en el estado de B
+        if state_B != state_A:
+            encoder_count += 1  # Sentido horario
+            print(f"Giro horario - Count: {encoder_count}")
+        else:
+            encoder_count -= 1  # Sentido antihorario
+            print(f"Giro antihorario - Count: {encoder_count}")
+
+        # Actualizar el estado anterior
+        last_state_A = state_A
+        last_state_B = state_B
+
+# Configuración inicial
+def setup():
+    global encoder_A_pin, encoder_B_pin
+
+    # Configurar pines del encoder como entradas con resistencias pull-up
+    encoder_A_pin = DigitalInputDevice(encoder_A, pull_up=True)
+    encoder_B_pin = DigitalInputDevice(encoder_B, pull_up=True)
+
+    # Configurar la detección de eventos para ambos pines del encoder
+    encoder_A_pin.when_activated = encoder_callback
+    encoder_A_pin.when_deactivated = encoder_callback
+    encoder_B_pin.when_activated = encoder_callback
+    encoder_B_pin.when_deactivated = encoder_callback
+    print("Encoder configurado correctamente.")
+
+# Función principal
+def main():
+    try:
+        setup()
+        print("Leyendo encoder. Presiona Ctrl+C para salir.")
+        while True:
+            sleep(0.1)  # Mantener el programa en ejecución
+    except KeyboardInterrupt:
+        print("\nPrograma terminado.")
+    finally:
+        encoder_A_pin.close()
+        encoder_B_pin.close()
+
+if _name_ == '_main_':
+    main()
