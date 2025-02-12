@@ -2,11 +2,11 @@
 
 ## Asesor:      
 
-##Sebastián:
+## Sebastián:
 Programación de cámaras.
-##Alan:
+## Alan:
 Red neuronal (entrenamiento) y diseño mecánio.
-##Said:
+## Said:
 Programación de motores.
-##Abraham:
+## Abraham:
 Algoritmo de exploración y modelos del robot.
