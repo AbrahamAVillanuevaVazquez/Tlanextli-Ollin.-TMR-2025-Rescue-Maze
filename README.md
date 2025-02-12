@@ -1,8 +1,12 @@
 # Responsabilidades delegadas:
 
-Asesor:      
+## Asesor:      
 
-Sebastián:   Programación de cámaras.
-Alan:        Red neuronal (entrenamiento) y diseño mecánio.
-Said:        Programación de motores.
-Abraham:     Algoritmo de exploración y modelos del robot.
+##Sebastián:
+Programación de cámaras.
+##Alan:
+Red neuronal (entrenamiento) y diseño mecánio.
+##Said:
+Programación de motores.
+##Abraham:
+Algoritmo de exploración y modelos del robot.
